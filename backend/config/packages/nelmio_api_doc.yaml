@@ -1,0 +1,13 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: "Check24 API"
+            description: "API documentation for Check24"
+            version: "1.0.0"
+        servers:
+            - url: "http://localhost:8001"
+              description: "Local Development"
+    areas:
+        default:
+            path_patterns:
+                - ^/api/v1

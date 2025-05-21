@@ -1,0 +1,8 @@
+controllers:
+  resource:
+    path: ../src/
+    namespace: App\
+  type: attribute
+
+api_login_check:
+  path: /api/v1/login

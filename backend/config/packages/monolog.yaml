@@ -1,0 +1,20 @@
+monolog:
+  channels: ["deprecation", "app"]
+
+  handlers:
+    main:
+      type: stream
+      path: "%kernel.logs_dir%/%kernel.environment%.log"
+      level: debug
+      channels: ["!event"]
+
+    console:
+      type: console
+      process_psr_3_messages: false
+      channels: ["!event", "!doctrine"]
+
+    deprecation:
+      type: stream
+      path: "%kernel.logs_dir%/deprecations.log"
+      level: info
+      channels: ["deprecation"]

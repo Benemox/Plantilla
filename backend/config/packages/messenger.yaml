@@ -1,0 +1,39 @@
+framework:
+    messenger:
+        default_bus: command.bus
+
+        buses:
+            command.bus:
+                default_middleware: false
+                middleware:
+                    - doctrine_transaction
+                    - validation
+                    - 'command.bus.middleware.send'
+                    - handle_message
+
+            query.bus:
+                default_middleware: false
+                middleware:
+                    - validation
+                    - handle_message
+
+            event.bus:
+                default_middleware: false
+                middleware:
+                    - 'event.bus.middleware.send'
+                    - handle_message
+
+        transports:
+            command_async:
+                dsn: '%env(MESSENGER_COMMAND_TRANSPORT_DSN)%'
+
+            query_sync:
+                dsn: 'sync://'
+
+            event_async:
+                dsn: '%env(MESSENGER_EVENT_TRANSPORT_DSN)%'
+
+        routing:
+            App\Shared\Domain\Bus\CommandMessageInterface: command_async
+            App\Shared\Domain\Bus\QueryMessageInterface: query_sync
+            App\Shared\Domain\Bus\EventMessageInterface: event_async

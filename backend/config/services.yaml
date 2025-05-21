@@ -1,0 +1,87 @@
+parameters:
+  guzzle_sanitize_keys: [ 'request.body.password' ]
+  monolog_sanitize_keys: [ 'request.body.password', 'response.body.token' ]
+  local_file_storage_path: '%kernel.project_dir%/public/upload'
+  API_SECRET_TOKEN: '%env(API_SECRET_TOKEN)%'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    bind:
+
+  _instanceof:
+    App\Shared\Domain\Bus\HandlerInterface:
+      tags: [ 'messenger.message_handler' ]
+
+  App\:
+    resource: '../src/'
+    exclude:
+      - '../src/Kernel.php'
+
+  App\Shared\Domain\Bus\DispatcherInterface: '@bus.dispatcher'
+
+  bus.dispatcher:
+    class: App\Shared\Infrastructure\Symfony\Messenger\BusDispatcher
+    arguments:
+      $eventBus: '@messenger.bus.event.bus'
+      $queryBus: '@messenger.bus.query.bus'
+      $commandBus: '@messenger.bus.command.bus'
+
+  command.bus.middleware.send:
+    class: Symfony\Component\Messenger\Middleware\SendMessageMiddleware
+    arguments:
+      $sendersLocator: '@command.bus.senders_locator'
+    public: true
+
+  event.bus.middleware.send:
+    class: Symfony\Component\Messenger\Middleware\SendMessageMiddleware
+    arguments:
+      $sendersLocator: '@event.bus.senders_locator'
+    public: true
+
+  command.bus.senders_locator:
+    class: Symfony\Component\Messenger\Transport\Sender\SendersLocator
+    arguments:
+      - { '*': ['messenger.sender.command_async'] }
+      - !service_locator
+        messenger.sender.command_async: '@messenger.sender.command_async'
+
+  event.bus.senders_locator:
+    class: Symfony\Component\Messenger\Transport\Sender\SendersLocator
+    arguments:
+      - { '*': ['messenger.sender.event_async'] }
+      - !service_locator
+        messenger.sender.event_async: '@messenger.sender.event_async'
+
+  # Senders para command y event (fábrica)
+  messenger.sender.command_async:
+    class: Symfony\Component\Messenger\Transport\Sender\SenderInterface
+    factory: [ '@messenger.transport.command_async', 'get' ]
+    public: false
+
+  messenger.sender.event_async:
+    class: Symfony\Component\Messenger\Transport\Sender\SenderInterface
+    factory: [ '@messenger.transport.event_async', 'get' ]
+    public: false
+
+  App\Shared\Http\ExceptionListener:
+    tags:
+      - { name: kernel.event_listener, event: kernel.exception }
+
+  App\Auth\Infrastructure\Security\TokenAuthenticator:
+    arguments:
+      $params: '@parameter_bag'
+    public: true
+
+  monolog.logger.messenger:
+    class: Monolog\Logger
+    arguments:
+      - 'messenger'
+      - [ '@monolog.handler.messenger' ]
+
+  monolog.handler.messenger:
+    class: Monolog\Handler\StreamHandler
+    arguments:
+      - '%kernel.logs_dir%/messenger.log'
+      - 'info'
