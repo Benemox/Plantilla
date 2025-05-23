@@ -63,8 +63,8 @@ Ensure you have the following installed before running the project:
 ### 4.1. Clone the Repository
 If using a ZIP archive, extract and navigate to the project directory:
 ```bash
- unzip check24.zip -d check24
- cd check24
+ unzip project.zip -d project
+ cd project
 ```
 
 ### 4.2. Set Up Environment Variables
